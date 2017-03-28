@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Globalization;
 
-namespace RockStone.Inka.MomBrokers
+namespace Sangmado.Inka.MomBrokers
 {
     public class MessageReceivedEventArgs : EventArgs
     {

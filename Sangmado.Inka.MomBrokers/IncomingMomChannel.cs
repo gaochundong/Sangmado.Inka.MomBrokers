@@ -2,10 +2,9 @@
 using System.Threading;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
-using RockStone.Inka.Extensions;
-using RockStone.Inka.Logging;
+using Sangmado.Inka.Logging;
 
-namespace RockStone.Inka.MomBrokers
+namespace Sangmado.Inka.MomBrokers
 {
     public class IncomingMomChannel : ReconnectableMomChannel, IIncomingMomChannel
     {

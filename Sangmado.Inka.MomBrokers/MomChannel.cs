@@ -2,10 +2,9 @@
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using RabbitMQ.Client.Exceptions;
-using RockStone.Inka.Extensions;
-using RockStone.Inka.Logging;
+using Sangmado.Inka.Logging;
 
-namespace RockStone.Inka.MomBrokers
+namespace Sangmado.Inka.MomBrokers
 {
     public abstract class MomChannel : IMomChannel
     {
@@ -22,9 +21,12 @@ namespace RockStone.Inka.MomBrokers
 
         protected MomChannel(MomHostSetting host, MomChannelAddress address, MomChannelSetting setting)
         {
-            Guard.ArgumentNotNull(host, "host");
-            Guard.ArgumentNotNull(address, "address");
-            Guard.ArgumentNotNull(setting, "setting");
+            if (host == null)
+                throw new ArgumentNullException("host");
+            if (address == null)
+                throw new ArgumentNullException("address");
+            if (setting == null)
+                throw new ArgumentNullException("setting");
 
             Host = host;
             Address = address;

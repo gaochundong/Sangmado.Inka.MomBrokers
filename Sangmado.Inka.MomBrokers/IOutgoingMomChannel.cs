@@ -1,5 +1,5 @@
 ﻿
-namespace RockStone.Inka.MomBrokers
+namespace Sangmado.Inka.MomBrokers
 {
     public interface IOutgoingMomChannel : IMomChannel
     {

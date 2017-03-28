@@ -1,8 +1,8 @@
-﻿using System.Threading;
-using RockStone.Inka.Extensions;
-using RockStone.Inka.Logging;
+﻿using System;
+using System.Threading;
+using Sangmado.Inka.Logging;
 
-namespace RockStone.Inka.MomBrokers
+namespace Sangmado.Inka.MomBrokers
 {
     public class OutgoingMomChannel : ReconnectableMomChannel, IOutgoingMomChannel
     {
@@ -15,7 +15,8 @@ namespace RockStone.Inka.MomBrokers
 
         public void Publish(byte[] message)
         {
-            Guard.ArgumentNotNull(message, "message");
+            if (message == null)
+                throw new ArgumentNullException("message");
 
             if (!IsConnected)
             {
@@ -40,7 +41,8 @@ namespace RockStone.Inka.MomBrokers
 
         public void Publish(byte[] message, long token)
         {
-            Guard.ArgumentNotNull(message, "message");
+            if (message == null)
+                throw new ArgumentNullException("message");
 
             if (!IsConnected)
             {

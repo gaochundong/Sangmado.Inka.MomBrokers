@@ -1,6 +1,6 @@
 ﻿using System.Globalization;
 
-namespace RockStone.Inka.MomBrokers
+namespace Sangmado.Inka.MomBrokers
 {
     public class MomChannelClusteredAddress : MomChannelAddress
     {

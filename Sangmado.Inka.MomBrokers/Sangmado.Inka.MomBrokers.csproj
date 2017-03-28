@@ -7,8 +7,8 @@
     <ProjectGuid>{B227A5EC-64B4-4D6F-8038-5C75832BBB52}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>RockStone.Inka.MomBrokers</RootNamespace>
-    <AssemblyName>RockStone.Inka.MomBrokers</AssemblyName>
+    <RootNamespace>Sangmado.Inka.MomBrokers</RootNamespace>
+    <AssemblyName>Sangmado.Inka.MomBrokers</AssemblyName>
     <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <SccProjectName>SAK</SccProjectName>
@@ -38,6 +38,9 @@
       <HintPath>..\packages\RabbitMQ.Client.4.1.1\lib\net451\RabbitMQ.Client.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="Sangmado.Inka.Logging, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Sangmado.Inka.Logging.1.0.0.0\lib\net46\Sangmado.Inka.Logging.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="Microsoft.CSharp" />
@@ -49,6 +52,7 @@
     <Compile Include="..\SolutionVersion.cs">
       <Link>SolutionVersion.cs</Link>
     </Compile>
+    <Compile Include="Extensions\ThreadExtensions.cs" />
     <Compile Include="IIncomingMomChannel.cs" />
     <Compile Include="IMomChannel.cs" />
     <Compile Include="IncomingMomChannel.cs" />

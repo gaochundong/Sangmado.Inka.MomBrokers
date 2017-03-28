@@ -2,9 +2,9 @@
 using System.Threading;
 using System.Threading.Tasks;
 using RabbitMQ.Client;
-using RockStone.Inka.Logging;
+using Sangmado.Inka.Logging;
 
-namespace RockStone.Inka.MomBrokers
+namespace Sangmado.Inka.MomBrokers
 {
     public abstract class ReconnectableMomChannel : MomChannel
     {
