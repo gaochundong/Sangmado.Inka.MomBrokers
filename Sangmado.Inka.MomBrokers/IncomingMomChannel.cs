@@ -15,8 +15,8 @@ namespace Sangmado.Inka.MomBrokers
         private readonly object _controlLocker = new object();
         private Action _recoverConsume = null;
 
-        public IncomingMomChannel(MomHostSetting host, MomChannelAddress address, MomChannelSetting setting)
-            : base(host, address, setting)
+        public IncomingMomChannel(MomHostSetting host, MomExchangeSetting exchange, MomQueueSetting queue)
+            : base(host, exchange, queue)
         {
             this.Connected += OnConnected;
         }
@@ -44,14 +44,14 @@ namespace Sangmado.Inka.MomBrokers
                 if (_consumer != null) return;
 
                 _consumer = new EventingBasicConsumer(this.Channel);
-                _consumerTag = this.Channel.BasicConsume(this.Address.QueueName, this.Setting.QueueNoAck, _consumer);
+                _consumerTag = this.Channel.BasicConsume(this.QueueSetting.QueueName, this.QueueSetting.QueueNoAck, _consumer);
                 _consumer.Received += OnReceived;
                 _consumer.Shutdown += OnShutdown;
 
                 _recoverConsume = RecoverConsume;
 
                 _log.DebugFormat("StartConsume, start to consume [{0}] on consumer tag [{1}] with setting [{2}].",
-                    this.Address, _consumerTag, this.Setting);
+                    this.QueueSetting.QueueName, _consumerTag, this.QueueSetting);
             }
         }
 
@@ -60,7 +60,7 @@ namespace Sangmado.Inka.MomBrokers
             lock (_controlLocker)
             {
                 _log.DebugFormat("StopConsume, stop to consume [{0}] on consumer tag [{1}] with setting [{2}].",
-                    this.Address, _consumerTag, this.Setting);
+                    this.QueueSetting.QueueName, _consumerTag, this.QueueSetting);
 
                 try
                 {
@@ -97,8 +97,8 @@ namespace Sangmado.Inka.MomBrokers
             {
                 if (_consumer != null)
                 {
-                    _log.DebugFormat("RecoverConsume, recover consumer [{0}] on [{1}].", this.Address, _consumerTag);
-                    _consumerTag = this.Channel.BasicConsume(this.Address.QueueName, this.Setting.QueueNoAck, _consumerTag, _consumer);
+                    _log.DebugFormat("RecoverConsume, recover consumer [{0}] on [{1}].", this.QueueSetting, _consumerTag);
+                    _consumerTag = this.Channel.BasicConsume(this.QueueSetting.QueueName, this.QueueSetting.QueueNoAck, _consumerTag, _consumer);
                 }
             }
         }
@@ -106,7 +106,7 @@ namespace Sangmado.Inka.MomBrokers
         private void OnShutdown(object sender, ShutdownEventArgs e)
         {
             _log.DebugFormat("OnShutdown, consumer [{0}] on [{1}] shutdown due to [{2}].",
-                this.Address, _consumerTag, e);
+                this.QueueSetting, _consumerTag, e);
             StopConsume();
         }
 
@@ -144,7 +144,7 @@ namespace Sangmado.Inka.MomBrokers
 
         public void Ack(ulong deliveryTag)
         {
-            if (this.Setting.QueueNoAck)
+            if (this.QueueSetting.QueueNoAck)
                 return;
 
 #if VERBOSE

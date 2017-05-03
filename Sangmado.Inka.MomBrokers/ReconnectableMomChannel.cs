@@ -13,13 +13,13 @@ namespace Sangmado.Inka.MomBrokers
         private System.Threading.Timer _retryTimer = null;
         private readonly object _retryLock = new object();
 
-        protected ReconnectableMomChannel(MomHostSetting host, MomChannelAddress address, MomChannelSetting setting)
-            : this(host, address, setting, TimeSpan.FromSeconds(60))
+        protected ReconnectableMomChannel(MomHostSetting host, MomExchangeSetting exchange, MomQueueSetting queue)
+            : this(host, exchange, queue, TimeSpan.FromSeconds(60))
         {
         }
 
-        protected ReconnectableMomChannel(MomHostSetting host, MomChannelAddress address, MomChannelSetting setting, TimeSpan retryPeriod)
-            : base(host, address, setting)
+        protected ReconnectableMomChannel(MomHostSetting host, MomExchangeSetting exchange, MomQueueSetting queue, TimeSpan retryPeriod)
+            : base(host, exchange, queue)
         {
             this.RetryPeriod = retryPeriod;
         }
@@ -48,7 +48,8 @@ namespace Sangmado.Inka.MomBrokers
         {
             lock (_retryLock)
             {
-                _log.DebugFormat("SetupRetryTimer, setup timer when retry to connect [{0}].", this.Address);
+                _log.DebugFormat("SetupRetryTimer, setup timer when retry to connect ExchangeSetting[{0}], QueueSetting[{1}].",
+                    this.ExchangeSetting, this.QueueSetting);
 
                 if (_retryTimer == null)
                 {
@@ -78,7 +79,8 @@ namespace Sangmado.Inka.MomBrokers
         {
             lock (_retryLock)
             {
-                _log.DebugFormat("CloseRetryTimer, close timer after retry to connect [{0}].", this.Address);
+                _log.DebugFormat("CloseRetryTimer, close timer after retry to connect ExchangeSetting[{0}], QueueSetting[{1}].",
+                    this.ExchangeSetting, this.QueueSetting);
 
                 if (_retryTimer != null)
                 {

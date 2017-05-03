@@ -4,8 +4,8 @@ namespace Sangmado.Inka.MomBrokers
 {
     public interface IMomChannel
     {
-        MomChannelAddress Address { get; }
-        MomChannelSetting Setting { get; }
+        MomExchangeSetting ExchangeSetting { get; }
+        MomQueueSetting QueueSetting { get; }
 
         bool IsConnected { get; }
 

@@ -19,23 +19,23 @@ namespace Sangmado.Inka.MomBrokers
         // the application should enforce mutual exclusion itself.
         protected readonly object _pipelining = new object();
 
-        protected MomChannel(MomHostSetting host, MomChannelAddress address, MomChannelSetting setting)
+        protected MomChannel(MomHostSetting host, MomExchangeSetting exchange, MomQueueSetting queue)
         {
             if (host == null)
                 throw new ArgumentNullException("host");
-            if (address == null)
-                throw new ArgumentNullException("address");
-            if (setting == null)
-                throw new ArgumentNullException("setting");
+            if (exchange == null)
+                throw new ArgumentNullException("exchange");
+            if (queue == null)
+                throw new ArgumentNullException("queue");
 
-            Host = host;
-            Address = address;
-            Setting = setting;
+            HostSetting = host;
+            ExchangeSetting = exchange;
+            QueueSetting = queue;
         }
 
-        public MomHostSetting Host { get; protected set; }
-        public MomChannelAddress Address { get; protected set; }
-        public MomChannelSetting Setting { get; protected set; }
+        public MomHostSetting HostSetting { get; protected set; }
+        public MomExchangeSetting ExchangeSetting { get; protected set; }
+        public MomQueueSetting QueueSetting { get; protected set; }
 
         protected IModel Channel { get { return _channel; } }
 
@@ -51,7 +51,7 @@ namespace Sangmado.Inka.MomBrokers
 
                 var connectionFactory = BuildConnectionFactory();
                 _connection = connectionFactory.CreateConnection();
-                _connection.AutoClose = this.Host.AutoClose;
+                _connection.AutoClose = this.HostSetting.AutoClose;
                 _connection.CallbackException += OnConnectionCallbackException;
                 _connection.ConnectionShutdown += OnConnectionShutdown;
 
@@ -123,16 +123,16 @@ namespace Sangmado.Inka.MomBrokers
             var factory = new ConnectionFactory()
             {
                 Protocol = Protocols.DefaultProtocol,
-                HostName = this.Host.HostName,
-                Port = this.Host.Port,
-                VirtualHost = this.Host.VirtualHost,
-                UserName = this.Host.UserName,
-                Password = this.Host.Password,
-                RequestedConnectionTimeout = this.Host.RequestedConnectionTimeout,
-                RequestedHeartbeat = this.Host.RequestedHeartbeat,
+                HostName = this.HostSetting.HostName,
+                Port = this.HostSetting.Port,
+                VirtualHost = this.HostSetting.VirtualHost,
+                UserName = this.HostSetting.UserName,
+                Password = this.HostSetting.Password,
+                RequestedConnectionTimeout = this.HostSetting.RequestedConnectionTimeout,
+                RequestedHeartbeat = this.HostSetting.RequestedHeartbeat,
             };
 
-            factory.ClientProperties.Add("Application Name", this.Setting.ClientServiceName);
+            factory.ClientProperties.Add("Application Name", this.HostSetting.ClientServiceName);
             factory.ClientProperties.Add("Application Connected Time (UTC)", DateTime.UtcNow.ToString("o"));
 
             _log.DebugFormat("BuildConnectionFactory, Protocol[{0}], HostName[{1}], Port[{2}], VirtualHost[{3}], UserName[{4}], "
@@ -156,42 +156,54 @@ namespace Sangmado.Inka.MomBrokers
             // Durability (exchanges survive broker restart)
             // Auto-delete (exchange is deleted when all queues have finished using it)
             // Arguments (these are broker-dependent)
-            string exchangeType = this.Setting.ExchangeType;
-            bool exchangeDurable = this.Setting.ExchangeDurable;
-            bool exchangeAutoDelete = this.Setting.ExchangeAutoDelete;
-            var exchangeArguments = this.Setting.ExchangeArguments;
+            string exchangeType = this.ExchangeSetting.ExchangeType;
+            bool exchangeDurable = this.ExchangeSetting.ExchangeDurable;
+            bool exchangeAutoDelete = this.ExchangeSetting.ExchangeAutoDelete;
+            var exchangeArguments = this.ExchangeSetting.ExchangeArguments;
 
             // Durable (the queue will survive a broker restart)
             // Exclusive (used by only one connection and the queue will be deleted when that connection closes)
             // Auto-delete (queue is deleted when last consumer unsubscribed)
             // Arguments (some brokers use it to implement additional features like message TTL)
-            bool queueDurable = this.Setting.QueueDurable;
-            bool queueExclusive = this.Setting.QueueExclusive;
-            bool queueAutoDelete = this.Setting.QueueAutoDelete;
-            var queueArguments = this.Setting.QueueArguments;
+            bool queueDurable = this.QueueSetting.QueueDurable;
+            bool queueExclusive = this.QueueSetting.QueueExclusive;
+            bool queueAutoDelete = this.QueueSetting.QueueAutoDelete;
+            var queueArguments = this.QueueSetting.QueueArguments;
 
-            _log.DebugFormat("BindChannel, binding Address[{0}] with Setting[{1}].", this.Address, this.Setting);
+            _log.DebugFormat("BindChannel, binding ExchangeSetting[{0}] with QueueSetting[{1}].", this.ExchangeSetting, this.QueueSetting);
 
             _channel = _connection.CreateModel();
             _channel.CallbackException += OnChannelCallbackException;
             _channel.ModelShutdown += OnChannelShutdown;
 
-            if (!string.IsNullOrEmpty(this.Address.ExchangeName))
+            if (!string.IsNullOrEmpty(this.ExchangeSetting.ExchangeName))
             {
-                _channel.ExchangeDeclare(this.Address.ExchangeName, exchangeType, exchangeDurable, exchangeAutoDelete, exchangeArguments);
+                _channel.ExchangeDeclare(this.ExchangeSetting.ExchangeName, exchangeType, exchangeDurable, exchangeAutoDelete, exchangeArguments);
             }
 
-            if (!string.IsNullOrEmpty(this.Address.QueueName))
+            if (!string.IsNullOrEmpty(this.QueueSetting.QueueName))
             {
-                var queueStatus = _channel.QueueDeclare(this.Address.QueueName, queueDurable, queueExclusive, queueAutoDelete, queueArguments);
-                _channel.QueueBind(this.Address.QueueName, this.Address.ExchangeName, this.Address.RoutingKey);
+                var queueStatus = _channel.QueueDeclare(this.QueueSetting.QueueName, queueDurable, queueExclusive, queueAutoDelete, queueArguments);
+
+                if (this.QueueSetting.QueueBindRoutingKeys == null || this.QueueSetting.QueueBindRoutingKeys.Count == 0)
+                {
+                    _channel.QueueBind(this.QueueSetting.QueueName, this.ExchangeSetting.ExchangeName, null);
+                }
+                else
+                {
+                    foreach (var routingKey in this.QueueSetting.QueueBindRoutingKeys)
+                    {
+                        _channel.QueueBind(this.QueueSetting.QueueName, this.ExchangeSetting.ExchangeName, routingKey);
+                    }
+                }
+
                 _channel.BasicQos(0, 1, false);
 
                 _log.DebugFormat("BindChannel, QueueName[{0}], ConsumerCount[{1}], MessageCount[{2}].",
                     queueStatus.QueueName, queueStatus.ConsumerCount, queueStatus.MessageCount);
             }
 
-            _log.DebugFormat("BindChannel, bound Address[{0}] with Setting[{1}].", this.Address, this.Setting);
+            _log.DebugFormat("BindChannel, bound ExchangeSetting[{0}] with QueueSetting[{1}].", this.ExchangeSetting, this.QueueSetting);
         }
 
         protected virtual void OnChannelShutdown(object sender, ShutdownEventArgs e)
@@ -253,7 +265,7 @@ namespace Sangmado.Inka.MomBrokers
         {
             if (Connected != null)
             {
-                Connected(this, new MomChannelConnectedEventArgs(this.Address));
+                Connected(this, new MomChannelConnectedEventArgs(this.ExchangeSetting, this.QueueSetting));
             }
         }
 
@@ -261,7 +273,7 @@ namespace Sangmado.Inka.MomBrokers
         {
             if (Disconnected != null)
             {
-                Disconnected(this, new MomChannelDisconnectedEventArgs(this.Address));
+                Disconnected(this, new MomChannelDisconnectedEventArgs(this.ExchangeSetting, this.QueueSetting));
             }
         }
 

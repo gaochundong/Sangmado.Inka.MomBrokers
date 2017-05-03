@@ -9,17 +9,20 @@ namespace Sangmado.Inka.MomBrokers
         {
         }
 
-        public MomChannelDisconnectedEventArgs(MomChannelAddress address)
+        public MomChannelDisconnectedEventArgs(MomExchangeSetting exchange, MomQueueSetting queue)
           : this()
         {
-            this.Address = address;
+            this.ExchangeSetting = exchange;
+            this.QueueSetting = queue;
         }
 
-        public MomChannelAddress Address { get; set; }
+        public MomExchangeSetting ExchangeSetting { get; set; }
+        public MomQueueSetting QueueSetting { get; set; }
 
         public override string ToString()
         {
-            return string.Format(CultureInfo.InvariantCulture, "{0}", this.Address);
+            return string.Format(CultureInfo.InvariantCulture,
+                "ExchangeSetting[{0}], QueueSetting[{1}]", this.ExchangeSetting, this.QueueSetting);
         }
     }
 }

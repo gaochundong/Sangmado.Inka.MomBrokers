@@ -21,7 +21,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;VERBOSE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
@@ -58,13 +58,12 @@
     <Compile Include="IOutgoingMomChannel.cs" />
     <Compile Include="EventArgs\MessageReceivedEventArgs.cs" />
     <Compile Include="MomChannel.cs" />
-    <Compile Include="Settings\MomChannelClusteredAddress.cs" />
-    <Compile Include="Settings\MomChannelAddress.cs" />
+    <Compile Include="Settings\MomExchangeSetting.cs" />
     <Compile Include="EventArgs\MomChannelConnectedEventArgs.cs" />
     <Compile Include="EventArgs\MomChannelDisconnectedEventArgs.cs" />
     <Compile Include="EventArgs\MomChannelNotConnectedException.cs" />
+    <Compile Include="Settings\MomQueueSetting.cs" />
     <Compile Include="Settings\MomHostSetting.cs" />
-    <Compile Include="Settings\MomChannelSetting.cs" />
     <Compile Include="OutgoingMomChannel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ReconnectableMomChannel.cs" />

@@ -22,6 +22,8 @@ namespace Sangmado.Inka.MomBrokers
         public int RequestedConnectionTimeout { get; set; }
         public ushort RequestedHeartbeat { get; set; }
 
+        public string ClientServiceName { get; set; }
+
         public override string ToString()
         {
             return string.Format(CultureInfo.InvariantCulture,
