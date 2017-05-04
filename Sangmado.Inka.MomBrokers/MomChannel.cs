@@ -187,7 +187,7 @@ namespace Sangmado.Inka.MomBrokers
 
                 if (this.QueueSetting.QueueBindRoutingKeys == null || this.QueueSetting.QueueBindRoutingKeys.Count == 0)
                 {
-                    _channel.QueueBind(this.QueueSetting.QueueName, this.ExchangeSetting.ExchangeName, null);
+                    _channel.QueueBind(this.QueueSetting.QueueName, this.ExchangeSetting.ExchangeName, string.Empty);
                 }
                 else
                 {
