@@ -12,5 +12,9 @@ namespace Sangmado.Inka.MomBrokers
         event EventHandler<MessageReceivedEventArgs> Received;
 
         void Ack(ulong deliveryTag);
+        void Ack(ulong deliveryTag, bool multiple);
+        void Nack(ulong deliveryTag, bool multiple, bool requeue);
+        void Reject(ulong deliveryTag, bool requeue);
+        void Recover(bool requeue);
     }
 }

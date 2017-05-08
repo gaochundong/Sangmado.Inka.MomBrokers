@@ -144,17 +144,70 @@ namespace Sangmado.Inka.MomBrokers
 
         public void Ack(ulong deliveryTag)
         {
+            Ack(deliveryTag, false);
+        }
+
+        public void Ack(ulong deliveryTag, bool multiple)
+        {
             if (this.QueueSetting.QueueNoAck)
                 return;
 
 #if VERBOSE
-            _log.DebugFormat("Ack, ack DeliveryTag[{0}] on ConsumerTag[{1}], on Thread[{2}].",
-                deliveryTag, _consumerTag, Thread.CurrentThread.GetDescription());
+            _log.DebugFormat("Ack, ack DeliveryTag[{0}] on ConsumerTag[{1}] with Multiple[{2}], on Thread[{3}].",
+                deliveryTag, _consumerTag, multiple, Thread.CurrentThread.GetDescription());
 #endif
 
             lock (_pipelining)
             {
-                this.Channel.BasicAck(deliveryTag, true);
+                this.Channel.BasicAck(deliveryTag, multiple);
+            }
+        }
+
+        public void Nack(ulong deliveryTag, bool multiple, bool requeue)
+        {
+            if (this.QueueSetting.QueueNoAck)
+                return;
+
+#if VERBOSE
+            _log.DebugFormat("Nack, nack DeliveryTag[{0}] on ConsumerTag[{1}] with Multiple[{2}] and Requeue[{3}], on Thread[{4}].",
+                deliveryTag, _consumerTag, multiple, requeue, Thread.CurrentThread.GetDescription());
+#endif
+
+            lock (_pipelining)
+            {
+                this.Channel.BasicNack(deliveryTag, multiple, requeue);
+            }
+        }
+
+        public void Reject(ulong deliveryTag, bool requeue)
+        {
+            if (this.QueueSetting.QueueNoAck)
+                return;
+
+#if VERBOSE
+            _log.DebugFormat("Reject, reject DeliveryTag[{0}] on ConsumerTag[{1}] with Requeue[{2}], on Thread[{3}].",
+                deliveryTag, _consumerTag, requeue, Thread.CurrentThread.GetDescription());
+#endif
+
+            lock (_pipelining)
+            {
+                this.Channel.BasicReject(deliveryTag, requeue);
+            }
+        }
+
+        public void Recover(bool requeue)
+        {
+            if (this.QueueSetting.QueueNoAck)
+                return;
+
+#if VERBOSE
+            _log.DebugFormat("Recover, recover on ConsumerTag[{0}] with Requeue[{1}], on Thread[{2}].",
+                _consumerTag, requeue, Thread.CurrentThread.GetDescription());
+#endif
+
+            lock (_pipelining)
+            {
+                this.Channel.BasicRecover(requeue);
             }
         }
     }
