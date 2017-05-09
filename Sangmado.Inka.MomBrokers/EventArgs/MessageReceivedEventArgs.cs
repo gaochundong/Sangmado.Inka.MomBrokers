@@ -31,6 +31,30 @@ namespace Sangmado.Inka.MomBrokers
             }
         }
 
+        public void Ack(bool multiple)
+        {
+            if (_channel != null)
+            {
+                _channel.Ack(this.DeliveryTag, multiple);
+            }
+        }
+
+        public void Nack(bool multiple, bool requeue)
+        {
+            if (_channel != null)
+            {
+                _channel.Nack(this.DeliveryTag, multiple, requeue);
+            }
+        }
+
+        public void Reject(bool requeue)
+        {
+            if (_channel != null)
+            {
+                _channel.Reject(this.DeliveryTag, requeue);
+            }
+        }
+
         public override string ToString()
         {
             return string.Format(CultureInfo.InvariantCulture,
