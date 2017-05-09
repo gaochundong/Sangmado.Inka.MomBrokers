@@ -55,6 +55,32 @@ namespace Sangmado.Inka.MomBrokers
             }
         }
 
+        public void StartConsume(string consumerTag)
+        {
+            if (string.IsNullOrWhiteSpace(consumerTag))
+                throw new ArgumentNullException("consumerTag");
+
+            if (!IsConnected)
+            {
+                throw new MomChannelNotConnectedException("The channel hasn't been connected.");
+            }
+
+            lock (_controlLocker)
+            {
+                if (_consumer != null) return;
+
+                _consumer = new EventingBasicConsumer(this.Channel);
+                _consumerTag = this.Channel.BasicConsume(this.QueueSetting.QueueName, this.QueueSetting.QueueNoAck, consumerTag, _consumer);
+                _consumer.Received += OnReceived;
+                _consumer.Shutdown += OnShutdown;
+
+                _recoverConsume = RecoverConsume;
+
+                _log.DebugFormat("StartConsume, start to consume [{0}] on consumer tag [{1}] with setting [{2}].",
+                    this.QueueSetting.QueueName, _consumerTag, this.QueueSetting);
+            }
+        }
+
         public void StopConsume()
         {
             lock (_controlLocker)
@@ -99,6 +125,7 @@ namespace Sangmado.Inka.MomBrokers
                 {
                     _log.DebugFormat("RecoverConsume, recover consumer [{0}] on [{1}].", this.QueueSetting, _consumerTag);
                     _consumerTag = this.Channel.BasicConsume(this.QueueSetting.QueueName, this.QueueSetting.QueueNoAck, _consumerTag, _consumer);
+                    this.Channel.BasicRecover(true);
                 }
             }
         }
