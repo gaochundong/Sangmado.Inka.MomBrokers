@@ -15,13 +15,15 @@ namespace Sangmado.Inka.MomBrokers
 
         public void Publish(byte[] message)
         {
-            Publish(message, null);
+            Publish(message, string.Empty);
         }
 
         public void Publish(byte[] message, string routingKey)
         {
             if (message == null)
                 throw new ArgumentNullException("message");
+            if (routingKey == null)
+                throw new ArgumentNullException("routingKey");
 
             if (!IsConnected)
             {
