@@ -20,6 +20,15 @@ namespace Sangmado.Inka.MomBrokers
 
         public void Publish(byte[] message, string routingKey)
         {
+            // This flag tells the server how to react if the message cannot be routed to a queue.
+            // If this flag is set, the server will return an unroutable message with a Return method. 
+            // If this flag is zero, the server silently drops the message.
+            bool mandatory = false;
+            Publish(message, routingKey, mandatory);
+        }
+
+        public void Publish(byte[] message, string routingKey, bool mandatory)
+        {
             if (message == null)
                 throw new ArgumentNullException("message");
             if (routingKey == null)
@@ -42,8 +51,7 @@ namespace Sangmado.Inka.MomBrokers
                     message.Length,
                     Thread.CurrentThread.GetDescription());
 #endif
-
-                this.Channel.BasicPublish(this.ExchangeSetting.ExchangeName, routingKey, false, null, message);
+                this.Channel.BasicPublish(this.ExchangeSetting.ExchangeName, routingKey, mandatory, null, message);
             }
         }
     }
