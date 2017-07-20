@@ -12,6 +12,7 @@ namespace Sangmado.Inka.MomBrokers
 
         private System.Threading.Timer _retryTimer = null;
         private readonly object _retryLock = new object();
+        private readonly object _connectLock = new object();
 
         protected ReconnectableMomChannel(MomHostSetting host, MomExchangeSetting exchange, MomQueueSetting queue)
             : this(host, exchange, queue, TimeSpan.FromSeconds(60))
@@ -24,7 +25,7 @@ namespace Sangmado.Inka.MomBrokers
             this.RetryPeriod = retryPeriod;
         }
 
-        public TimeSpan RetryPeriod { get; set; }
+        public TimeSpan RetryPeriod { get; private set; }
 
         protected override void OnConnected()
         {
@@ -59,18 +60,25 @@ namespace Sangmado.Inka.MomBrokers
                       {
                           Task.Factory.StartNew(() =>
                           {
-                              try
+                              if (Monitor.TryEnter(_connectLock))
                               {
-                                  this.Connect();
-                              }
-                              catch (Exception ex)
-                              {
-                                  _log.Error(ex.Message, ex);
+                                  try
+                                  {
+                                      Connect();
+                                  }
+                                  catch (Exception ex)
+                                  {
+                                      _log.Error(ex.Message, ex);
+                                  }
+                                  finally
+                                  {
+                                      Monitor.Exit(_connectLock);
+                                  }
                               }
                           },
                           TaskCreationOptions.PreferFairness);
                       },
-                      null, TimeSpan.FromSeconds(0), this.RetryPeriod);
+                      null, this.RetryPeriod, this.RetryPeriod);
                 }
             }
         }
