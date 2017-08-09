@@ -118,6 +118,53 @@ namespace Sangmado.Inka.MomBrokers
             OnDisconnected();
         }
 
+        protected void AbnormalDisconnect()
+        {
+            _log.WarnFormat("AbnormalDisconnect, abnormal disconnect to message bus.");
+
+            try
+            {
+                if (_channel != null)
+                {
+                    _channel.CallbackException -= OnChannelCallbackException;
+                    _channel.ModelShutdown -= OnChannelShutdown;
+                    _channel.Close();
+                }
+            }
+            catch (AlreadyClosedException) { }
+            catch (Exception ex)
+            {
+                _log.Error(string.Format("AbnormalDisconnect, disconnect to message bus channel failed due to [{0}].", ex.Message), ex);
+            }
+            finally
+            {
+                _channel = null;
+            }
+
+            try
+            {
+                if (_connection != null)
+                {
+                    _connection.CallbackException -= OnConnectionCallbackException;
+                    _connection.ConnectionShutdown -= OnConnectionShutdown;
+                    _connection.Close();
+                }
+            }
+            catch (AlreadyClosedException) { }
+            catch (Exception ex)
+            {
+                _log.Error(string.Format("AbnormalDisconnect, disconnect to message bus connection failed due to [{0}].", ex.Message), ex);
+            }
+            finally
+            {
+                _connection = null;
+            }
+
+            _log.WarnFormat("AbnormalDisconnect, disconnected to message bus.");
+
+            OnAbnormalDisconnected();
+        }
+
         private ConnectionFactory BuildConnectionFactory()
         {
             var factory = new ConnectionFactory()
@@ -206,16 +253,16 @@ namespace Sangmado.Inka.MomBrokers
             _log.DebugFormat("BindChannel, bound ExchangeSetting[{0}] with QueueSetting[{1}].", this.ExchangeSetting, this.QueueSetting);
         }
 
-        protected virtual void OnChannelShutdown(object sender, ShutdownEventArgs e)
+        private void OnChannelShutdown(object sender, ShutdownEventArgs e)
         {
             _log.ErrorFormat("OnChannelShutdown, channel is shutdown due to [{0}].",
                 e == null ? "" :
                     string.Format("ClassId[{0}], MethodId[{1}], ReplyCode[{2}], ReplyText[{3}], Cause[{4}]",
                         e.ClassId, e.MethodId, e.ReplyCode, e.ReplyText, e.Cause));
-            Disconnect();
+            AbnormalDisconnect();
         }
 
-        protected virtual void OnChannelCallbackException(object sender, CallbackExceptionEventArgs e)
+        private void OnChannelCallbackException(object sender, CallbackExceptionEventArgs e)
         {
             _log.ErrorFormat("OnChannelCallbackException, [{0}].",
                 e == null ? "" :
@@ -223,16 +270,16 @@ namespace Sangmado.Inka.MomBrokers
                         e.Exception, e.Detail == null ? "" : string.Join(",", e.Detail.Values)));
         }
 
-        protected virtual void OnConnectionShutdown(object sender, ShutdownEventArgs e)
+        private void OnConnectionShutdown(object sender, ShutdownEventArgs e)
         {
             _log.ErrorFormat("OnConnectionShutdown, connection is shutdown due to [{0}].",
                 e == null ? "" :
                     string.Format("ClassId[{0}], MethodId[{1}], ReplyCode[{2}], ReplyText[{3}], Cause[{4}]",
                         e.ClassId, e.MethodId, e.ReplyCode, e.ReplyText, e.Cause));
-            Disconnect();
+            AbnormalDisconnect();
         }
 
-        protected virtual void OnConnectionCallbackException(object sender, CallbackExceptionEventArgs e)
+        private void OnConnectionCallbackException(object sender, CallbackExceptionEventArgs e)
         {
             _log.ErrorFormat("OnConnectionCallbackException, [{0}].",
                 e == null ? "" :
@@ -256,6 +303,12 @@ namespace Sangmado.Inka.MomBrokers
         }
 
         protected virtual void OnDisconnected()
+        {
+            IsConnected = false;
+            RaiseDisconnectedEvent();
+        }
+
+        protected virtual void OnAbnormalDisconnected()
         {
             IsConnected = false;
             RaiseDisconnectedEvent();

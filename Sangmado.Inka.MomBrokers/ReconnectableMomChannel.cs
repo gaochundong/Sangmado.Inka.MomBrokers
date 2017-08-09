@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
-using RabbitMQ.Client;
 using Sangmado.Inka.Logging;
 
 namespace Sangmado.Inka.MomBrokers
@@ -39,9 +38,9 @@ namespace Sangmado.Inka.MomBrokers
             CloseRetryTimer();
         }
 
-        protected override void OnChannelShutdown(object sender, ShutdownEventArgs e)
+        protected override void OnAbnormalDisconnected()
         {
-            base.OnChannelShutdown(sender, e);
+            base.OnAbnormalDisconnected();
             SetupRetryTimer();
         }
 
@@ -54,7 +53,6 @@ namespace Sangmado.Inka.MomBrokers
 
                 if (_retryTimer == null)
                 {
-
                     _retryTimer = new System.Threading.Timer(
                       (s) =>
                       {
