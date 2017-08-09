@@ -50,13 +50,15 @@ namespace Sangmado.Inka.MomBrokers
                 if (_consumer != null) return;
 
                 _consumer = new EventingBasicConsumer(this.Channel);
-                _consumerTag = this.Channel.BasicConsume(this.QueueSetting.QueueName, this.QueueSetting.QueueNoAck, _consumer);
+                _consumer.Registered += OnRegistered;
+                _consumer.Unregistered += OnUnregistered;
                 _consumer.Received += OnReceived;
                 _consumer.Shutdown += OnShutdown;
+                _consumerTag = this.Channel.BasicConsume(this.QueueSetting.QueueName, this.QueueSetting.QueueNoAck, _consumer);
 
                 _recoverConsume = RecoverConsume;
 
-                _log.DebugFormat("StartConsume, start to consume [{0}] on consumer tag [{1}] with setting [{2}].",
+                _log.WarnFormat("StartConsume, start to consume [{0}] on consumer tag [{1}] with setting [{2}].",
                     this.QueueSetting.QueueName, _consumerTag, this.QueueSetting);
             }
         }
@@ -76,13 +78,15 @@ namespace Sangmado.Inka.MomBrokers
                 if (_consumer != null) return;
 
                 _consumer = new EventingBasicConsumer(this.Channel);
-                _consumerTag = this.Channel.BasicConsume(this.QueueSetting.QueueName, this.QueueSetting.QueueNoAck, consumerTag, _consumer);
+                _consumer.Registered += OnRegistered;
+                _consumer.Unregistered += OnUnregistered;
                 _consumer.Received += OnReceived;
                 _consumer.Shutdown += OnShutdown;
+                _consumerTag = this.Channel.BasicConsume(this.QueueSetting.QueueName, this.QueueSetting.QueueNoAck, consumerTag, _consumer);
 
                 _recoverConsume = RecoverConsume;
 
-                _log.DebugFormat("StartConsume, start to consume [{0}] on consumer tag [{1}] with setting [{2}].",
+                _log.WarnFormat("StartConsume, start to consume [{0}] on consumer tag [{1}] with setting [{2}].",
                     this.QueueSetting.QueueName, _consumerTag, this.QueueSetting);
             }
         }
@@ -91,13 +95,15 @@ namespace Sangmado.Inka.MomBrokers
         {
             lock (_controlLocker)
             {
-                _log.DebugFormat("StopConsume, stop to consume [{0}] on consumer tag [{1}] with setting [{2}].",
+                _log.WarnFormat("StopConsume, stop to consume [{0}] on consumer tag [{1}] with setting [{2}].",
                     this.QueueSetting.QueueName, _consumerTag, this.QueueSetting);
 
                 try
                 {
                     if (_consumer != null)
                     {
+                        _consumer.Registered -= OnRegistered;
+                        _consumer.Unregistered -= OnUnregistered;
                         _consumer.Received -= OnReceived;
                         _consumer.Shutdown -= OnShutdown;
 
@@ -129,16 +135,28 @@ namespace Sangmado.Inka.MomBrokers
             {
                 if (_consumer != null)
                 {
-                    _log.DebugFormat("RecoverConsume, recover consumer [{0}] on [{1}].", this.QueueSetting, _consumerTag);
+                    _log.WarnFormat("RecoverConsume, recover consumer [{0}] on [{1}].", this.QueueSetting, _consumerTag);
                     _consumerTag = this.Channel.BasicConsume(this.QueueSetting.QueueName, this.QueueSetting.QueueNoAck, _consumerTag, _consumer);
                     this.Channel.BasicRecover(true);
                 }
             }
         }
 
+        private void OnRegistered(object sender, ConsumerEventArgs e)
+        {
+            _log.DebugFormat("OnRegistered, consumer [{0}] on [{1}] registered to [{2}].",
+                this.QueueSetting, _consumerTag, e.ConsumerTag);
+        }
+
+        private void OnUnregistered(object sender, ConsumerEventArgs e)
+        {
+            _log.DebugFormat("OnUnregistered, consumer [{0}] on [{1}] unregistered to [{2}].",
+                this.QueueSetting, _consumerTag, e.ConsumerTag);
+        }
+
         private void OnShutdown(object sender, ShutdownEventArgs e)
         {
-            _log.DebugFormat("OnShutdown, consumer [{0}] on [{1}] shutdown due to [{2}].",
+            _log.ErrorFormat("OnShutdown, consumer [{0}] on [{1}] shutdown due to [{2}].",
                 this.QueueSetting, _consumerTag, e);
         }
 
