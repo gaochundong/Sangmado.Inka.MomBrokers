@@ -21,6 +21,12 @@ namespace Sangmado.Inka.MomBrokers
             this.Connected += OnConnected;
         }
 
+        public IncomingMomChannel(MomHostSetting host, MomExchangeSetting exchange, MomQueueSetting queue, TimeSpan retryPeriod)
+            : base(host, exchange, queue, retryPeriod)
+        {
+            this.Connected += OnConnected;
+        }
+
         public bool IsConsuming
         {
             get
@@ -134,7 +140,6 @@ namespace Sangmado.Inka.MomBrokers
         {
             _log.DebugFormat("OnShutdown, consumer [{0}] on [{1}] shutdown due to [{2}].",
                 this.QueueSetting, _consumerTag, e);
-            StopConsume();
         }
 
         private void OnReceived(object sender, BasicDeliverEventArgs e)

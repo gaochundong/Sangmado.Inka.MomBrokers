@@ -20,12 +20,14 @@ namespace Sangmado.Inka.MomBrokers.TestConsole
             var publishingChannel = new OutgoingMomChannel(
                 TestPublishingChannelConfiguration.GetHostSetting(),
                 TestPublishingChannelConfiguration.GetExchangeSetting(),
-                TestPublishingChannelConfiguration.GetQueueSetting());
+                TestPublishingChannelConfiguration.GetQueueSetting(),
+                TimeSpan.FromSeconds(15));
 
             var consumingChannel = new IncomingMomChannel(
                 TestConsumingChannelConfiguration.GetHostSetting(),
                 TestConsumingChannelConfiguration.GetExchangeSetting(),
-                TestConsumingChannelConfiguration.GetQueueSetting());
+                TestConsumingChannelConfiguration.GetQueueSetting(),
+                TimeSpan.FromSeconds(15));
 
             Console.WriteLine("Service starting.");
 

@@ -9,7 +9,12 @@ namespace Sangmado.Inka.MomBrokers
         private ILog _log = Logger.Get<OutgoingMomChannel>();
 
         public OutgoingMomChannel(MomHostSetting host, MomExchangeSetting exchange, MomQueueSetting queue)
-          : base(host, exchange, queue)
+            : base(host, exchange, queue)
+        {
+        }
+
+        public OutgoingMomChannel(MomHostSetting host, MomExchangeSetting exchange, MomQueueSetting queue, TimeSpan retryPeriod)
+            : base(host, exchange, queue, retryPeriod)
         {
         }
 
