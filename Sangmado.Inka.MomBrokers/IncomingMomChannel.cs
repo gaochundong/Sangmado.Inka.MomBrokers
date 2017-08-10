@@ -123,12 +123,6 @@ namespace Sangmado.Inka.MomBrokers
             }
         }
 
-        private void OnConnected(object sender, MomChannelConnectedEventArgs e)
-        {
-            if (_recoverConsume != null)
-                _recoverConsume();
-        }
-
         private void RecoverConsume()
         {
             lock (_controlLocker)
@@ -140,6 +134,12 @@ namespace Sangmado.Inka.MomBrokers
                     this.Channel.BasicRecover(true);
                 }
             }
+        }
+
+        private void OnConnected(object sender, MomChannelConnectedEventArgs e)
+        {
+            if (_recoverConsume != null)
+                _recoverConsume();
         }
 
         private void OnRegistered(object sender, ConsumerEventArgs e)
@@ -188,6 +188,20 @@ namespace Sangmado.Inka.MomBrokers
                     "ConsumerTag[{0}], DeliveryTag[{1}], Exchange[{2}], RoutingKey[{3}], BodyLength[{4}].",
                     e.ConsumerTag, e.DeliveryTag, e.Exchange, e.RoutingKey, e.Body == null ? "" : e.Body.Length.ToString());
             }
+        }
+
+        public uint ConsumerCount()
+        {
+            // Returns the number of consumers on a queue. 
+            // This method assumes the queue exists. If it doesn't, will be closed with an exception.
+            return this.Channel.ConsumerCount(this.QueueSetting.QueueName);
+        }
+
+        public uint MessageCount()
+        {
+            // Returns the number of messages in a queue ready to be delivered to consumers.
+            // This method assumes the queue exists. If it doesn't, will be closed with an exception.
+            return this.Channel.MessageCount(this.QueueSetting.QueueName);
         }
 
         public event EventHandler<MessageReceivedEventArgs> Received;

@@ -9,6 +9,9 @@ namespace Sangmado.Inka.MomBrokers
         void StartConsume();
         void StopConsume();
 
+        uint ConsumerCount();
+        uint MessageCount();
+
         event EventHandler<MessageReceivedEventArgs> Received;
 
         void Ack(ulong deliveryTag);
