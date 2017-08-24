@@ -12,7 +12,6 @@ namespace Sangmado.Inka.MomBrokers
 
         private EventingBasicConsumer _consumer = null;
         private string _consumerTag;
-        private readonly object _controlLocker = new object();
         private Action _recoverConsume = null;
 
         public IncomingMomChannel(MomHostSetting host, MomExchangeSetting exchange, MomQueueSetting queue)
@@ -40,13 +39,13 @@ namespace Sangmado.Inka.MomBrokers
 
         public void StartConsume()
         {
-            if (!IsConnected)
+            lock (_pipelining)
             {
-                throw new MomChannelNotConnectedException("The channel hasn't been connected.");
-            }
+                if (!IsConnected)
+                {
+                    throw new MomChannelNotConnectedException("The channel hasn't been connected.");
+                }
 
-            lock (_controlLocker)
-            {
                 if (_consumer != null) return;
 
                 _consumer = new EventingBasicConsumer(this.Channel);
@@ -65,16 +64,16 @@ namespace Sangmado.Inka.MomBrokers
 
         public void StartConsume(string consumerTag)
         {
-            if (string.IsNullOrWhiteSpace(consumerTag))
-                throw new ArgumentNullException("consumerTag");
-
-            if (!IsConnected)
+            lock (_pipelining)
             {
-                throw new MomChannelNotConnectedException("The channel hasn't been connected.");
-            }
+                if (string.IsNullOrWhiteSpace(consumerTag))
+                    throw new ArgumentNullException("consumerTag");
 
-            lock (_controlLocker)
-            {
+                if (!IsConnected)
+                {
+                    throw new MomChannelNotConnectedException("The channel hasn't been connected.");
+                }
+
                 if (_consumer != null) return;
 
                 _consumer = new EventingBasicConsumer(this.Channel);
@@ -93,7 +92,7 @@ namespace Sangmado.Inka.MomBrokers
 
         public void StopConsume()
         {
-            lock (_controlLocker)
+            lock (_pipelining)
             {
                 _log.WarnFormat("StopConsume, stop to consume [{0}] on consumer tag [{1}] with setting [{2}].",
                     this.QueueSetting.QueueName, _consumerTag, this.QueueSetting);
@@ -125,7 +124,7 @@ namespace Sangmado.Inka.MomBrokers
 
         private void RecoverConsume()
         {
-            lock (_controlLocker)
+            lock (_pipelining)
             {
                 if (_consumer != null)
                 {
@@ -194,14 +193,20 @@ namespace Sangmado.Inka.MomBrokers
         {
             // Returns the number of consumers on a queue. 
             // This method assumes the queue exists. If it doesn't, will be closed with an exception.
-            return this.Channel.ConsumerCount(this.QueueSetting.QueueName);
+            lock (_pipelining)
+            {
+                return this.Channel.ConsumerCount(this.QueueSetting.QueueName);
+            }
         }
 
         public uint MessageCount()
         {
             // Returns the number of messages in a queue ready to be delivered to consumers.
             // This method assumes the queue exists. If it doesn't, will be closed with an exception.
-            return this.Channel.MessageCount(this.QueueSetting.QueueName);
+            lock (_pipelining)
+            {
+                return this.Channel.MessageCount(this.QueueSetting.QueueName);
+            }
         }
 
         public event EventHandler<MessageReceivedEventArgs> Received;
@@ -223,7 +228,16 @@ namespace Sangmado.Inka.MomBrokers
 
             lock (_pipelining)
             {
-                this.Channel.BasicAck(deliveryTag, multiple);
+                try
+                {
+                    this.Channel.BasicAck(deliveryTag, multiple);
+                }
+                catch (Exception ex)
+                {
+                    _log.Error(ex.Message, ex);
+                    AbnormalDisconnect();
+                    throw;
+                }
             }
         }
 
@@ -239,7 +253,16 @@ namespace Sangmado.Inka.MomBrokers
 
             lock (_pipelining)
             {
-                this.Channel.BasicNack(deliveryTag, multiple, requeue);
+                try
+                {
+                    this.Channel.BasicNack(deliveryTag, multiple, requeue);
+                }
+                catch (Exception ex)
+                {
+                    _log.Error(ex.Message, ex);
+                    AbnormalDisconnect();
+                    throw;
+                }
             }
         }
 
@@ -255,7 +278,16 @@ namespace Sangmado.Inka.MomBrokers
 
             lock (_pipelining)
             {
-                this.Channel.BasicReject(deliveryTag, requeue);
+                try
+                {
+                    this.Channel.BasicReject(deliveryTag, requeue);
+                }
+                catch (Exception ex)
+                {
+                    _log.Error(ex.Message, ex);
+                    AbnormalDisconnect();
+                    throw;
+                }
             }
         }
 
@@ -271,7 +303,16 @@ namespace Sangmado.Inka.MomBrokers
 
             lock (_pipelining)
             {
-                this.Channel.BasicRecover(requeue);
+                try
+                {
+                    this.Channel.BasicRecover(requeue);
+                }
+                catch (Exception ex)
+                {
+                    _log.Error(ex.Message, ex);
+                    AbnormalDisconnect();
+                    throw;
+                }
             }
         }
     }

@@ -43,126 +43,135 @@ namespace Sangmado.Inka.MomBrokers
 
         public void Connect()
         {
-            if (IsConnected) return;
-
-            try
+            lock (_pipelining)
             {
-                _log.DebugFormat("Connect, begin to connect to message bus.");
+                if (IsConnected) return;
 
-                var connectionFactory = BuildConnectionFactory();
-                _connection = connectionFactory.CreateConnection();
-                _connection.AutoClose = this.HostSetting.AutoClose;
-                _connection.CallbackException += OnConnectionCallbackException;
-                _connection.ConnectionShutdown += OnConnectionShutdown;
+                try
+                {
+                    _log.DebugFormat("Connect, begin to connect to message bus.");
 
-                BindChannel();
+                    var connectionFactory = BuildConnectionFactory();
+                    _connection = connectionFactory.CreateConnection();
+                    _connection.AutoClose = this.HostSetting.AutoClose;
+                    _connection.CallbackException += OnConnectionCallbackException;
+                    _connection.ConnectionShutdown += OnConnectionShutdown;
 
-                _log.DebugFormat("Connect, connect to message bus successfully.");
+                    BindChannel();
 
-                OnConnected();
-            }
-            catch (Exception ex)
-            {
-                _log.Error(string.Format("Connect, connect to message bus failed due to [{0}].", ex.Message), ex);
+                    _log.DebugFormat("Connect, connect to message bus successfully.");
 
-                throw;
+                    OnConnected();
+                }
+                catch (Exception ex)
+                {
+                    _log.Error(string.Format("Connect, connect to message bus failed due to [{0}].", ex.Message), ex);
+
+                    throw;
+                }
             }
         }
 
         public void Disconnect()
         {
-            if (!IsConnected) return;
-
-            _log.DebugFormat("Disconnect, begin to disconnect to message bus.");
-
-            try
+            lock (_pipelining)
             {
-                if (_channel != null)
+                if (!IsConnected) return;
+
+                _log.DebugFormat("Disconnect, begin to disconnect to message bus.");
+
+                try
                 {
-                    _channel.CallbackException -= OnChannelCallbackException;
-                    _channel.ModelShutdown -= OnChannelShutdown;
-                    _channel.Close();
+                    if (_channel != null)
+                    {
+                        _channel.CallbackException -= OnChannelCallbackException;
+                        _channel.ModelShutdown -= OnChannelShutdown;
+                        _channel.Close();
+                    }
                 }
-            }
-            catch (AlreadyClosedException) { }
-            catch (Exception ex)
-            {
-                _log.Error(string.Format("Disconnect, disconnect to message bus channel failed due to [{0}].", ex.Message), ex);
-            }
-            finally
-            {
-                _channel = null;
-            }
-
-            try
-            {
-                if (_connection != null)
+                catch (AlreadyClosedException) { }
+                catch (Exception ex)
                 {
-                    _connection.CallbackException -= OnConnectionCallbackException;
-                    _connection.ConnectionShutdown -= OnConnectionShutdown;
-                    _connection.Close();
+                    _log.Error(string.Format("Disconnect, disconnect to message bus channel failed due to [{0}].", ex.Message), ex);
                 }
-            }
-            catch (AlreadyClosedException) { }
-            catch (Exception ex)
-            {
-                _log.Error(string.Format("Disconnect, disconnect to message bus connection failed due to [{0}].", ex.Message), ex);
-            }
-            finally
-            {
-                _connection = null;
-            }
+                finally
+                {
+                    _channel = null;
+                }
 
-            _log.DebugFormat("Disconnect, disconnect to message bus successfully.");
+                try
+                {
+                    if (_connection != null)
+                    {
+                        _connection.CallbackException -= OnConnectionCallbackException;
+                        _connection.ConnectionShutdown -= OnConnectionShutdown;
+                        _connection.Close();
+                    }
+                }
+                catch (AlreadyClosedException) { }
+                catch (Exception ex)
+                {
+                    _log.Error(string.Format("Disconnect, disconnect to message bus connection failed due to [{0}].", ex.Message), ex);
+                }
+                finally
+                {
+                    _connection = null;
+                }
 
-            OnDisconnected();
+                _log.DebugFormat("Disconnect, disconnect to message bus successfully.");
+
+                OnDisconnected();
+            }
         }
 
         protected void AbnormalDisconnect()
         {
-            _log.WarnFormat("AbnormalDisconnect, abnormal disconnect to message bus.");
-
-            try
+            lock (_pipelining)
             {
-                if (_channel != null)
+                _log.WarnFormat("AbnormalDisconnect, abnormal disconnect to message bus.");
+
+                try
                 {
-                    _channel.CallbackException -= OnChannelCallbackException;
-                    _channel.ModelShutdown -= OnChannelShutdown;
-                    _channel.Close();
+                    if (_channel != null)
+                    {
+                        _channel.CallbackException -= OnChannelCallbackException;
+                        _channel.ModelShutdown -= OnChannelShutdown;
+                        _channel.Close();
+                    }
                 }
-            }
-            catch (AlreadyClosedException) { }
-            catch (Exception ex)
-            {
-                _log.Error(string.Format("AbnormalDisconnect, disconnect to message bus channel failed due to [{0}].", ex.Message), ex);
-            }
-            finally
-            {
-                _channel = null;
-            }
-
-            try
-            {
-                if (_connection != null)
+                catch (AlreadyClosedException) { }
+                catch (Exception ex)
                 {
-                    _connection.CallbackException -= OnConnectionCallbackException;
-                    _connection.ConnectionShutdown -= OnConnectionShutdown;
-                    _connection.Close();
+                    _log.Error(string.Format("AbnormalDisconnect, disconnect to message bus channel failed due to [{0}].", ex.Message), ex);
                 }
-            }
-            catch (AlreadyClosedException) { }
-            catch (Exception ex)
-            {
-                _log.Error(string.Format("AbnormalDisconnect, disconnect to message bus connection failed due to [{0}].", ex.Message), ex);
-            }
-            finally
-            {
-                _connection = null;
-            }
+                finally
+                {
+                    _channel = null;
+                }
 
-            _log.WarnFormat("AbnormalDisconnect, disconnected to message bus.");
+                try
+                {
+                    if (_connection != null)
+                    {
+                        _connection.CallbackException -= OnConnectionCallbackException;
+                        _connection.ConnectionShutdown -= OnConnectionShutdown;
+                        _connection.Close();
+                    }
+                }
+                catch (AlreadyClosedException) { }
+                catch (Exception ex)
+                {
+                    _log.Error(string.Format("AbnormalDisconnect, disconnect to message bus connection failed due to [{0}].", ex.Message), ex);
+                }
+                finally
+                {
+                    _connection = null;
+                }
 
-            OnAbnormalDisconnected();
+                _log.WarnFormat("AbnormalDisconnect, disconnected to message bus.");
+
+                OnAbnormalDisconnected();
+            }
         }
 
         private ConnectionFactory BuildConnectionFactory()

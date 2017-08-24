@@ -14,7 +14,7 @@ namespace Sangmado.Inka.MomBrokers
         private readonly object _connectLock = new object();
 
         protected ReconnectableMomChannel(MomHostSetting host, MomExchangeSetting exchange, MomQueueSetting queue)
-            : this(host, exchange, queue, TimeSpan.FromSeconds(60))
+            : this(host, exchange, queue, TimeSpan.FromSeconds(30))
         {
         }
 
