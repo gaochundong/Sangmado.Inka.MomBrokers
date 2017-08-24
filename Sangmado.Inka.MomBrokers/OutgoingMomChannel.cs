@@ -56,7 +56,16 @@ namespace Sangmado.Inka.MomBrokers
                     message.Length,
                     Thread.CurrentThread.GetDescription());
 #endif
-                this.Channel.BasicPublish(this.ExchangeSetting.ExchangeName, routingKey, mandatory, null, message);
+                try
+                {
+                    this.Channel.BasicPublish(this.ExchangeSetting.ExchangeName, routingKey, mandatory, null, message);
+                }
+                catch (Exception ex)
+                {
+                    _log.Error(ex.Message, ex);
+                    AbnormalDisconnect();
+                    throw;
+                }
             }
         }
     }
