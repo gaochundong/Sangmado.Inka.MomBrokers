@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading;
+using RabbitMQ.Client;
 using Sangmado.Inka.Logging;
 
 namespace Sangmado.Inka.MomBrokers
@@ -59,6 +60,43 @@ namespace Sangmado.Inka.MomBrokers
                 try
                 {
                     this.Channel.BasicPublish(this.ExchangeSetting.ExchangeName, routingKey, mandatory, null, message);
+                }
+                catch (Exception ex)
+                {
+                    _log.Error(ex.Message, ex);
+                    AbnormalDisconnect();
+                    throw;
+                }
+            }
+        }
+
+        public void Publish(byte[] message, string routingKey, IBasicProperties basicProperties)
+        {
+            if (message == null)
+                throw new ArgumentNullException("message");
+            if (routingKey == null)
+                throw new ArgumentNullException("routingKey");
+
+            if (!IsConnected)
+            {
+                throw new MomChannelNotConnectedException(
+                    string.Format("The channel hasn't been connected, HostSetting[{0}], ExchangeSetting[{1}].",
+                        this.HostSetting, this.ExchangeSetting));
+            }
+
+            lock (_pipelining)
+            {
+#if VERBOSE
+                _log.DebugFormat("Publish, IsChannelOpen[{0}], ExchangeName[{1}], RoutingKey[{2}], MessageLength[{3}], on Thread[{4}].",
+                    this.Channel == null ? false : this.Channel.IsOpen,
+                    this.ExchangeSetting.ExchangeName,
+                    routingKey,
+                    message.Length,
+                    Thread.CurrentThread.GetDescription());
+#endif
+                try
+                {
+                    this.Channel.BasicPublish(this.ExchangeSetting.ExchangeName, routingKey, basicProperties, message);
                 }
                 catch (Exception ex)
                 {
