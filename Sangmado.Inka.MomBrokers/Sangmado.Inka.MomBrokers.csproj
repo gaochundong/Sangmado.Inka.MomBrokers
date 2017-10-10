@@ -59,7 +59,7 @@
     <Compile Include="EventArgs\MessageReceivedEventArgs.cs" />
     <Compile Include="IMomProperties.cs" />
     <Compile Include="MomChannel.cs" />
-    <Compile Include="MomMomProperties.cs" />
+    <Compile Include="MomProperties.cs" />
     <Compile Include="Settings\MomExchangeSetting.cs" />
     <Compile Include="EventArgs\MomChannelConnectedEventArgs.cs" />
     <Compile Include="EventArgs\MomChannelDisconnectedEventArgs.cs" />

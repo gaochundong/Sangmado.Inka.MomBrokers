@@ -3,9 +3,9 @@ using RabbitMQ.Client;
 
 namespace Sangmado.Inka.MomBrokers
 {
-    internal class MomMomProperties : IMomProperties
+    internal class MomProperties : IMomProperties
     {
-        public MomMomProperties(IBasicProperties basicProperties)
+        public MomProperties(IBasicProperties basicProperties)
         {
             BasicProperties = basicProperties;
         }

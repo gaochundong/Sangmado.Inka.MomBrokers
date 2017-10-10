@@ -95,7 +95,7 @@ namespace Sangmado.Inka.MomBrokers
                     message.Length,
                     Thread.CurrentThread.GetDescription());
 #endif
-                var momMomProperties = iMomProperties as MomMomProperties;
+                var momMomProperties = iMomProperties as MomProperties;
                 try
                 {
                     if (momMomProperties == null)
@@ -114,7 +114,7 @@ namespace Sangmado.Inka.MomBrokers
         public IMomProperties BuildMomProperties()
         {
             var basicProperties = this.Channel.CreateBasicProperties();
-            return new MomMomProperties(basicProperties);
+            return new MomProperties(basicProperties);
         }
     }
 }
