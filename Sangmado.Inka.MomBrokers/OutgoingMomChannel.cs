@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using RabbitMQ.Client;
+using RabbitMQ.Client.Framing;
 using Sangmado.Inka.Logging;
 
 namespace Sangmado.Inka.MomBrokers
@@ -70,7 +71,7 @@ namespace Sangmado.Inka.MomBrokers
             }
         }
 
-        public void Publish(byte[] message, string routingKey, IBasicProperties basicProperties)
+        public void Publish(byte[] message, string routingKey, IMomProperties iMomProperties)
         {
             if (message == null)
                 throw new ArgumentNullException("message");
@@ -94,9 +95,12 @@ namespace Sangmado.Inka.MomBrokers
                     message.Length,
                     Thread.CurrentThread.GetDescription());
 #endif
+                var momMomProperties = iMomProperties as MomMomProperties;
                 try
                 {
-                    this.Channel.BasicPublish(this.ExchangeSetting.ExchangeName, routingKey, basicProperties, message);
+                    if (momMomProperties == null)
+                        throw new ArgumentNullException("IMomProperties");
+                    this.Channel.BasicPublish(this.ExchangeSetting.ExchangeName, routingKey, momMomProperties.BasicProperties, message);
                 }
                 catch (Exception ex)
                 {
@@ -105,6 +109,12 @@ namespace Sangmado.Inka.MomBrokers
                     throw;
                 }
             }
+        }
+
+        public IMomProperties BuildMomProperties()
+        {
+            var basicProperties = this.Channel.CreateBasicProperties();
+            return new MomMomProperties(basicProperties);
         }
     }
 }

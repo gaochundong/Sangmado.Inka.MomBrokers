@@ -8,6 +8,7 @@ namespace Sangmado.Inka.MomBrokers
         void Publish(byte[] message);
         void Publish(byte[] message, string routingKey);
         void Publish(byte[] message, string routingKey, bool mandatory);
-        void Publish(byte[] message, string routingKey, IBasicProperties basicProperties);
+        void Publish(byte[] message, string routingKey, IMomProperties basicProperties);
+        IMomProperties BuildMomProperties();
     }
 }
