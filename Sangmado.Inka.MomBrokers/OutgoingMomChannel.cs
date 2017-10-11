@@ -26,6 +26,14 @@ namespace Sangmado.Inka.MomBrokers
             return new MomBasicProperties();
         }
 
+        public ulong NextPublishSequenceNumber
+        {
+            get
+            {
+                return this.Channel.NextPublishSeqNo;
+            }
+        }
+
         public void ConfirmSelect()
         {
             if (!IsConnected)

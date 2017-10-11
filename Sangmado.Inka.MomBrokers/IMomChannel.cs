@@ -7,6 +7,7 @@ namespace Sangmado.Inka.MomBrokers
         MomExchangeSetting ExchangeSetting { get; }
         MomQueueSetting QueueSetting { get; }
 
+        int ChannelNumber { get; }
         bool IsConnected { get; }
 
         event EventHandler<MomChannelConnectedEventArgs> Connected;

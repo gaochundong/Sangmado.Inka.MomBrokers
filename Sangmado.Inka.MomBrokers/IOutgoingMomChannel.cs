@@ -7,6 +7,7 @@ namespace Sangmado.Inka.MomBrokers
     {
         IMomBasicProperties CreateBasicProperties();
 
+        ulong NextPublishSequenceNumber { get; }
         void ConfirmSelect();
         void WaitForConfirmsOrDie();
         void WaitForConfirmsOrDie(TimeSpan timeout);

@@ -39,6 +39,11 @@ namespace Sangmado.Inka.MomBrokers
 
         protected IModel Channel { get { return _channel; } }
 
+        public int ChannelNumber
+        {
+            get { return this.Channel.ChannelNumber; }
+        }
+
         #region Connect
 
         public void Connect()
