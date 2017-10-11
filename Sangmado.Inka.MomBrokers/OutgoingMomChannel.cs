@@ -26,6 +26,75 @@ namespace Sangmado.Inka.MomBrokers
             return new MomBasicProperties();
         }
 
+        public void ConfirmSelect()
+        {
+            if (!IsConnected)
+            {
+                throw new MomChannelNotConnectedException(
+                    string.Format("The channel hasn't been connected, HostSetting[{0}], ExchangeSetting[{1}].",
+                        this.HostSetting, this.ExchangeSetting));
+            }
+
+            lock (_pipelining)
+            {
+#if VERBOSE
+                _log.DebugFormat("ConfirmSelect, IsChannelOpen[{0}], ExchangeName[{1}], on Thread[{2}].",
+                    this.Channel == null ? false : this.Channel.IsOpen,
+                    this.ExchangeSetting.ExchangeName,
+                    Thread.CurrentThread.GetDescription());
+#endif
+                try
+                {
+                    this.Channel.ConfirmSelect();
+                }
+                catch (Exception ex)
+                {
+                    _log.Error(ex.Message, ex);
+                    AbnormalDisconnect();
+                    throw;
+                }
+            }
+        }
+
+        public void WaitForConfirmsOrDie()
+        {
+            // Waits until all messages published since the last call have been either ack'd or nack'd by the broker. 
+            // Returns whether all the messages were ack'd (and none were nack'd).
+            // Note, throws an exception when called on a non-Confirm channel.
+            WaitForConfirmsOrDie(TimeSpan.FromMilliseconds(Timeout.Infinite));
+        }
+
+        public void WaitForConfirmsOrDie(TimeSpan timeout)
+        {
+            if (!IsConnected)
+            {
+                throw new MomChannelNotConnectedException(
+                    string.Format("The channel hasn't been connected, HostSetting[{0}], ExchangeSetting[{1}].",
+                        this.HostSetting, this.ExchangeSetting));
+            }
+
+            lock (_pipelining)
+            {
+#if VERBOSE
+                _log.DebugFormat("WaitForConfirmsOrDie, IsChannelOpen[{0}], ExchangeName[{1}], TimeSpan[{2}], on Thread[{3}].",
+                    this.Channel == null ? false : this.Channel.IsOpen,
+                    this.ExchangeSetting.ExchangeName,
+                    timeout,
+                    Thread.CurrentThread.GetDescription());
+#endif
+                try
+                {
+                    this.Channel.WaitForConfirmsOrDie(timeout);
+                }
+                catch (Exception ex)
+                {
+                    _log.Error(ex.Message, ex);
+                    AbnormalDisconnect();
+                    throw;
+                }
+            }
+        }
+
         public void Publish(byte[] message)
         {
             Publish(message, string.Empty);
