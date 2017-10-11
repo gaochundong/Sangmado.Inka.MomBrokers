@@ -21,6 +21,11 @@ namespace Sangmado.Inka.MomBrokers
         {
         }
 
+        public IMomBasicProperties CreateBasicProperties()
+        {
+            return new MomBasicProperties();
+        }
+
         public void Publish(byte[] message)
         {
             Publish(message, string.Empty);
@@ -124,10 +129,46 @@ namespace Sangmado.Inka.MomBrokers
             }
         }
 
-        //public IMomBasicProperties CreateBasicProperties()
-        //{
-        //    var basicProperties = this.Channel.CreateBasicProperties();
-        //    return new MomBasicProperties(basicProperties);
-        //}
+        public void Publish(byte[] message, string routingKey, IMomBasicProperties basicProperties)
+        {
+            if (message == null)
+                throw new ArgumentNullException("message");
+            if (routingKey == null)
+                throw new ArgumentNullException("routingKey");
+            if (basicProperties == null)
+                throw new ArgumentNullException("basicProperties");
+
+            if (!IsConnected)
+            {
+                throw new MomChannelNotConnectedException(
+                    string.Format("The channel hasn't been connected, HostSetting[{0}], ExchangeSetting[{1}].",
+                        this.HostSetting, this.ExchangeSetting));
+            }
+
+            lock (_pipelining)
+            {
+#if VERBOSE
+                _log.DebugFormat("Publish, IsChannelOpen[{0}], ExchangeName[{1}], RoutingKey[{2}], BasicProperties[{3}], MessageLength[{4}], on Thread[{5}].",
+                    this.Channel == null ? false : this.Channel.IsOpen,
+                    this.ExchangeSetting.ExchangeName,
+                    routingKey,
+                    basicProperties,
+                    message.Length,
+                    Thread.CurrentThread.GetDescription());
+#endif
+                try
+                {
+                    var innerBasicProperties = this.Channel.CreateBasicProperties();
+                    basicProperties.FulfillBasicProperties(innerBasicProperties);
+                    this.Channel.BasicPublish(this.ExchangeSetting.ExchangeName, routingKey, innerBasicProperties, message);
+                }
+                catch (Exception ex)
+                {
+                    _log.Error(ex.Message, ex);
+                    AbnormalDisconnect();
+                    throw;
+                }
+            }
+        }
     }
 }
