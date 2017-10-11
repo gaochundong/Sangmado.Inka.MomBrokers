@@ -1,7 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using RabbitMQ.Client;
-using RabbitMQ.Client.Framing;
 using Sangmado.Inka.Logging;
 
 namespace Sangmado.Inka.MomBrokers
@@ -71,12 +72,14 @@ namespace Sangmado.Inka.MomBrokers
             }
         }
 
-        public void Publish(byte[] message, string routingKey, IMomProperties iMomProperties)
+        public void Publish(byte[] message, string routingKey, IDictionary<string, object> headers)
         {
             if (message == null)
                 throw new ArgumentNullException("message");
             if (routingKey == null)
                 throw new ArgumentNullException("routingKey");
+            if (headers == null)
+                throw new ArgumentNullException("headers");
 
             if (!IsConnected)
             {
@@ -88,19 +91,29 @@ namespace Sangmado.Inka.MomBrokers
             lock (_pipelining)
             {
 #if VERBOSE
-                _log.DebugFormat("Publish, IsChannelOpen[{0}], ExchangeName[{1}], RoutingKey[{2}], MessageLength[{3}], on Thread[{4}].",
+                _log.DebugFormat("Publish, IsChannelOpen[{0}], ExchangeName[{1}], RoutingKey[{2}], Headers[{3}], MessageLength[{4}], on Thread[{5}].",
                     this.Channel == null ? false : this.Channel.IsOpen,
                     this.ExchangeSetting.ExchangeName,
                     routingKey,
+                    string.Join(",", headers.Select(p => string.Format("{0}|{1}", p.Key, p.Value))),
                     message.Length,
                     Thread.CurrentThread.GetDescription());
 #endif
-                var momMomProperties = iMomProperties as MomProperties;
                 try
                 {
-                    if (momMomProperties == null)
-                        throw new ArgumentNullException("IMomProperties");
-                    this.Channel.BasicPublish(this.ExchangeSetting.ExchangeName, routingKey, momMomProperties.BasicProperties, message);
+                    var basicProperties = this.Channel.CreateBasicProperties();
+                    if (basicProperties.Headers == null)
+                    {
+                        basicProperties.Headers = headers;
+                    }
+                    else
+                    {
+                        foreach (var item in headers)
+                        {
+                            basicProperties.Headers[item.Key] = item.Value;
+                        }
+                    }
+                    this.Channel.BasicPublish(this.ExchangeSetting.ExchangeName, routingKey, basicProperties, message);
                 }
                 catch (Exception ex)
                 {
@@ -111,10 +124,10 @@ namespace Sangmado.Inka.MomBrokers
             }
         }
 
-        public IMomProperties BuildMomProperties()
-        {
-            var basicProperties = this.Channel.CreateBasicProperties();
-            return new MomProperties(basicProperties);
-        }
+        //public IMomBasicProperties CreateBasicProperties()
+        //{
+        //    var basicProperties = this.Channel.CreateBasicProperties();
+        //    return new MomBasicProperties(basicProperties);
+        //}
     }
 }

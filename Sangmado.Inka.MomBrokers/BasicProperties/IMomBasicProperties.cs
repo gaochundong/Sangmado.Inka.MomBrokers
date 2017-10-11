@@ -2,7 +2,7 @@
 
 namespace Sangmado.Inka.MomBrokers
 {
-    public interface IMomProperties
+    public interface IMomBasicProperties
     {
         IDictionary<string, object> Headers { get; set; }
     }
