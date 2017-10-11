@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Threading;
+using RabbitMQ.Client;
+using RabbitMQ.Client.Framing;
 using Sangmado.Inka.Logging;
 
 namespace Sangmado.Inka.MomBrokers
@@ -67,6 +69,52 @@ namespace Sangmado.Inka.MomBrokers
                     throw;
                 }
             }
+        }
+
+        public void Publish(byte[] message, string routingKey, IMomProperties iMomProperties)
+        {
+            if (message == null)
+                throw new ArgumentNullException("message");
+            if (routingKey == null)
+                throw new ArgumentNullException("routingKey");
+
+            if (!IsConnected)
+            {
+                throw new MomChannelNotConnectedException(
+                    string.Format("The channel hasn't been connected, HostSetting[{0}], ExchangeSetting[{1}].",
+                        this.HostSetting, this.ExchangeSetting));
+            }
+
+            lock (_pipelining)
+            {
+#if VERBOSE
+                _log.DebugFormat("Publish, IsChannelOpen[{0}], ExchangeName[{1}], RoutingKey[{2}], MessageLength[{3}], on Thread[{4}].",
+                    this.Channel == null ? false : this.Channel.IsOpen,
+                    this.ExchangeSetting.ExchangeName,
+                    routingKey,
+                    message.Length,
+                    Thread.CurrentThread.GetDescription());
+#endif
+                var momMomProperties = iMomProperties as MomProperties;
+                try
+                {
+                    if (momMomProperties == null)
+                        throw new ArgumentNullException("IMomProperties");
+                    this.Channel.BasicPublish(this.ExchangeSetting.ExchangeName, routingKey, momMomProperties.BasicProperties, message);
+                }
+                catch (Exception ex)
+                {
+                    _log.Error(ex.Message, ex);
+                    AbnormalDisconnect();
+                    throw;
+                }
+            }
+        }
+
+        public IMomProperties BuildMomProperties()
+        {
+            var basicProperties = this.Channel.CreateBasicProperties();
+            return new MomProperties(basicProperties);
         }
     }
 }
